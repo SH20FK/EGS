@@ -1,0 +1,28 @@
+# Automatic Free Games Claimer Pipeline
+# Generated automatically by Epic Games Claimer Dashboard
+# Learn more at: https://github.com/vogler/free-games-claimer
+
+name: Claim Free Games
+
+on:
+  schedule:
+    - cron: '0 1,13 * * *' # Check twice a day
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  claim:
+    name: Claim Freebies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Fetch and claim free games
+        uses: docker://vogler/free-games-claimer:latest
+        env:
+          # Epic Games Credentials
+          EPIC_EMAIL: ${{ secrets.EPIC_EMAIL }}
+          EPIC_PASSWORD: ${{ secrets.EPIC_PASSWORD }}
+          # EPIC_MFA_CODE: ${{ secrets.EPIC_MFA_CODE }} # Optional, required if 2FA Authenticator app is active
+          EPIC_FREE_GAMES_ONLY: 'true'
+          
+          # Discord notifications
+          NOTIFY_DISCORD_WEBHOOK: ${{ secrets.NOTIFY_DISCORD_WEBHOOK }}

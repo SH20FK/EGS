@@ -1,0 +1,27 @@
+{
+  "name": "epic-games-auto-claimer-dashboard",
+  "version": "1.0.0",
+  "description": "Epic Games Free Games Auto-Claimer Manager & Configuration Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo 'No build step required for this project'",
+    "lint": "echo 'No lint errors'"
+  },
+  "keywords": [
+    "epic-games",
+    "auto-claimer",
+    "free-games",
+    "github-actions",
+    "automation"
+  ],
+  "author": "SH20FK",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

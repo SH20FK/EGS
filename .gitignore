@@ -1,0 +1,52 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Dependencies
+node_modules
+dist
+build
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor backup files
+*~
+*.tmp
+*.bak
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Config
+config.local.js
+
+# Cache
+.cache
+.next
+.nuxt
+
+# Testing
+coverage
+.nyc_output
+
+# API Keys (local development)
+.api_keys
+secrets.json

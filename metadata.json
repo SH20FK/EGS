@@ -1,0 +1,6 @@
+{
+  "name": "Epic Games Auto-Claimer Dashboard",
+  "description": "A dashboard to view current free games on the Epic Games Store, GOG, and Prime Gaming, and generate/configure GitHub Actions workflows for the auto-claimer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
