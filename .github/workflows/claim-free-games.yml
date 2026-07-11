@@ -15,13 +15,27 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Fetch and claim free games
-        uses: docker://ghcr.io/vogler/free-games-claimer:latest
+      - name: Checkout claimer repository
+        uses: actions/checkout@v4
         with:
-          args: bash -c "export HOME=/root && export PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright && node /fgc/epic-games"
+          repository: 'vogler/free-games-claimer'
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright Firefox
+        run: npx playwright install --with-deps firefox
+        
+      - name: Run claimer script
+        run: |
+          node epic-games
         env:
-          HOME: /root
-          PLAYWRIGHT_BROWSERS_PATH: /root/.cache/ms-playwright
           # Epic Games Credentials
           EPIC_EMAIL: ${{ secrets.EPIC_EMAIL }}
           EPIC_PASSWORD: ${{ secrets.EPIC_PASSWORD }}

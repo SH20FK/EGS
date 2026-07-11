@@ -374,26 +374,38 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Fetch and claim free games
-        uses: docker://ghcr.io/vogler/free-games-claimer:latest`;
+      - name: Checkout claimer repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'vogler/free-games-claimer'
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright Firefox
+        run: npx playwright install --with-deps firefox`;
 
             const commands = [];
-            commands.push('export HOME=/root');
-            commands.push('export PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright');
-            if (enableEpic) commands.push('node /fgc/epic-games');
-            if (enableAmazon) commands.push('node /fgc/prime-gaming');
-            if (enableGog) commands.push('node /fgc/gog');
+            if (enableEpic) commands.push('node epic-games');
+            if (enableAmazon) commands.push('node prime-gaming');
+            if (enableGog) commands.push('node gog');
 
-            if (commands.length > 2) {
+            if (commands.length > 0) {
                 yaml += `
-        with:
-          args: bash -c "${commands.join(' && ')}"`;
+        
+      - name: Run claimer script
+        run: |
+          ${commands.join('\n          ')}`;
             }
 
             yaml += `
-        env:
-          HOME: /root
-          PLAYWRIGHT_BROWSERS_PATH: /root/.cache/ms-playwright`;
+        env:`;
 
             if (enableEpic) {
                 yaml += `
