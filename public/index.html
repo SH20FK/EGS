@@ -375,7 +375,20 @@ jobs:
     
     steps:
       - name: Fetch and claim free games
-        uses: docker://ghcr.io/vogler/free-games-claimer:latest
+        uses: docker://ghcr.io/vogler/free-games-claimer:latest`;
+
+            const commands = [];
+            if (enableEpic) commands.push('node /fgc/epic-games');
+            if (enableAmazon) commands.push('node /fgc/prime-gaming');
+            if (enableGog) commands.push('node /fgc/gog');
+
+            if (commands.length > 0) {
+                yaml += `
+        with:
+          args: bash -c "${commands.join(' && ')}"`;
+            }
+
+            yaml += `
         env:`;
 
             if (enableEpic) {

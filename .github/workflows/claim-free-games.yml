@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Fetch and claim free games
         uses: docker://ghcr.io/vogler/free-games-claimer:latest
+        with:
+          args: bash -c "node /fgc/epic-games"
         env:
           # Epic Games Credentials
           EPIC_EMAIL: ${{ secrets.EPIC_EMAIL }}
