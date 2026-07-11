@@ -390,7 +390,8 @@ jobs:
 
             yaml += `
         env:
-          HOME: /root`;
+          HOME: /root
+          PLAYWRIGHT_BROWSERS_PATH: /root/.cache/ms-playwright`;
 
             if (enableEpic) {
                 yaml += `

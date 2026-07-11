@@ -21,6 +21,7 @@ jobs:
           args: bash -c "node /fgc/epic-games"
         env:
           HOME: /root
+          PLAYWRIGHT_BROWSERS_PATH: /root/.cache/ms-playwright
           # Epic Games Credentials
           EPIC_EMAIL: ${{ secrets.EPIC_EMAIL }}
           EPIC_PASSWORD: ${{ secrets.EPIC_PASSWORD }}
