@@ -378,11 +378,13 @@ jobs:
         uses: docker://ghcr.io/vogler/free-games-claimer:latest`;
 
             const commands = [];
+            commands.push('export HOME=/root');
+            commands.push('export PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright');
             if (enableEpic) commands.push('node /fgc/epic-games');
             if (enableAmazon) commands.push('node /fgc/prime-gaming');
             if (enableGog) commands.push('node /fgc/gog');
 
-            if (commands.length > 0) {
+            if (commands.length > 2) {
                 yaml += `
         with:
           args: bash -c "${commands.join(' && ')}"`;

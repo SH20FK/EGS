@@ -18,7 +18,7 @@ jobs:
       - name: Fetch and claim free games
         uses: docker://ghcr.io/vogler/free-games-claimer:latest
         with:
-          args: bash -c "node /fgc/epic-games"
+          args: bash -c "export HOME=/root && export PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright && node /fgc/epic-games"
         env:
           HOME: /root
           PLAYWRIGHT_BROWSERS_PATH: /root/.cache/ms-playwright
