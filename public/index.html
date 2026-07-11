@@ -389,7 +389,15 @@ jobs:
         run: npm ci
         
       - name: Install Playwright Firefox
-        run: npx playwright install --with-deps firefox`;
+        run: npx playwright install --with-deps firefox
+        
+      - name: Restore browser profile cache
+        uses: actions/cache@v4
+        with:
+          path: data/browser
+          key: \${{ runner.os }}-free-games-claimer-browser-\${{ github.run_id }}
+          restore-keys: |
+            \${{ runner.os }}-free-games-claimer-browser-`;
 
             const commands = [];
             if (enableEpic) commands.push('node epic-games');
@@ -412,7 +420,7 @@ jobs:
           # Epic Games Credentials
           EPIC_EMAIL: \${{ secrets.EPIC_EMAIL }}
           EPIC_PASSWORD: \${{ secrets.EPIC_PASSWORD }}
-          # EPIC_MFA_CODE: \${{ secrets.EPIC_MFA_CODE }} # Optional, required if 2FA Authenticator app is active
+          EPIC_MFA_CODE: \${{ secrets.EPIC_MFA_CODE }}
           EPIC_FREE_GAMES_ONLY: 'true'`;
             }
 
