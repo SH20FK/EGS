@@ -389,7 +389,8 @@ jobs:
             }
 
             yaml += `
-        env:`;
+        env:
+          HOME: /root`;
 
             if (enableEpic) {
                 yaml += `
