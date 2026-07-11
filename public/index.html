@@ -246,6 +246,50 @@
                     <!-- Dyn list of required secrets based on selections -->
                 </div>
             </div>
+
+            <!-- Troubleshooting Card (Решение проблемы со входом) -->
+            <div class="bg-epic-cardBg border border-epic-border rounded-xl p-6 flex flex-col gap-4">
+                <h3 class="text-sm font-semibold tracking-wider text-rose-400 uppercase flex items-center gap-2">
+                    <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    ⚠️ Stuck on Captcha / "Not signed in"? (Решение ошибки)
+                </h3>
+                <p class="text-xs text-epic-muted leading-relaxed">
+                    Epic Games uses aggressive security checks (Captcha) when logging in from new servers like GitHub Actions cloud IPs. Since GitHub Actions is headless, it cannot solve graphic Captchas, causing a 180s login timeout. Here is how to fix this:
+                </p>
+                
+                <div class="space-y-4 text-xs mt-1">
+                    <!-- Method 1 -->
+                    <div class="border-l-2 border-epic-accentSub/30 pl-3">
+                        <h4 class="font-bold text-epic-text">🛡️ Способ 1: Использовать 2FA / TOTP Секрет (Рекомендуется)</h4>
+                        <p class="text-[11px] text-epic-muted mt-0.5 leading-relaxed">
+                            Если у вас включен двухфакторный вход через приложение-аутентификатор (Google Authenticator / Authy), Epic реже требует капчу:
+                        </p>
+                        <ol class="list-decimal list-inside text-[11px] text-epic-muted mt-1 space-y-0.5">
+                            <li>Перейдите в настройки аккаунта Epic Games ➜ <span class="text-epic-text">Пароль и Безопасность</span> ➜ <span class="text-epic-text">Двухфакторная аутентификация</span>.</li>
+                            <li>Включите <span class="text-epic-text">Стороннее приложение-аутентификатор</span> (или выключите и включите заново).</li>
+                            <li>Скопируйте <strong>16-значный буквенно-цифровой секретный ключ</strong> (base32 secret).</li>
+                            <li>Добавьте его в GitHub Secrets вашего репозитория под именем <span class="font-mono text-epic-accent font-bold">EPIC_MFA_CODE</span>. Скрипт будет сам генерировать одноразовые коды!</li>
+                        </ol>
+                    </div>
+
+                    <!-- Method 2 -->
+                    <div class="border-l-2 border-epic-blue/30 pl-3">
+                        <h4 class="font-bold text-epic-text">💻 Способ 2: Локальный вход и перенос куки-файлов (100% результат)</h4>
+                        <p class="text-[11px] text-epic-muted mt-0.5 leading-relaxed">
+                            Если Epic всё равно запрашивает капчу, вы можете войти в аккаунт один раз со своего компьютера, чтобы сгенерировать сессию, и перенести её в GitHub Actions:
+                        </p>
+                        <ol class="list-decimal list-inside text-[11px] text-epic-muted mt-1 space-y-1">
+                            <li>Скачайте/склонируйте проект автоклеймера на свой ПК. Установите Node.js, выполните <code class="bg-epic-bg border border-epic-border px-1 py-0.5 rounded font-mono text-epic-text">npm install</code> и запустите <code class="bg-epic-bg border border-epic-border px-1 py-0.5 rounded font-mono text-epic-text">node epic-games</code>.</li>
+                            <li>В открывшемся окне браузера пройдите авторизацию (введите логин, пароль, решите капчу и введите код подтверждения).</li>
+                            <li>После успешного входа скрипт создаст локальную папку <code class="bg-epic-bg border border-epic-border px-1 py-0.5 rounded font-mono text-epic-text">data/browser</code> на вашем ПК со всеми куками вашей сессии.</li>
+                            <li>Перенесите или скопируйте эту папку <code class="bg-epic-bg border border-epic-border px-1 py-0.5 rounded font-mono text-epic-text">data</code> в ваш личный GitHub-репозиторий и сделайте <code class="bg-epic-bg border border-epic-border px-1 py-0.5 rounded font-mono text-epic-text">git push</code>.</li>
+                            <li>Обновлённый рабочий процесс (YAML) автоматически подгрузит ваши куки из папки <code class="font-mono text-epic-text">data/browser</code> и продолжит работу без капч и логинов!</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
         </section>
 
     </main>
@@ -397,7 +441,82 @@ jobs:
           path: data/browser
           key: \${{ runner.os }}-free-games-claimer-browser-\${{ github.run_id }}
           restore-keys: |
-            \${{ runner.os }}-free-games-claimer-browser-`;
+            \${{ runner.os }}-free-games-claimer-browser-
+
+      - name: Checkout own repository (to load pre-authenticated session cookies)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          path: 'own-repo'
+
+      - name: Import pre-authenticated session cookies
+        run: |
+          if [ -d "own-repo/data/browser" ]; then
+            mkdir -p data
+            cp -r own-repo/data/browser data/
+            echo "Successfully loaded pre-authenticated cookies from own-repo/data/browser!"
+          fi`;
+
+            if (enableEpic) {
+                yaml += `
+          
+      - name: Generate Epic MFA code if TOTP secret is provided
+        run: |
+          if [ -n "\${{ secrets.EPIC_MFA_CODE }}" ]; then
+            if [[ ! "\${{ secrets.EPIC_MFA_CODE }}" =~ ^[0-9]{6}$ ]]; then
+              echo "EPIC_MFA_CODE is a TOTP Secret Key. Generating 6-digit code..."
+              OTP_CODE=\$(node -e "
+                try {
+                  const crypto = require('crypto');
+                  function base32Decode(base32) {
+                    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+                    const clean = base32.toUpperCase().replace(/[^A-Z2-7]/g, '');
+                    const length = clean.length;
+                    let bits = 0, value = 0;
+                    const bytes = [];
+                    for (let i = 0; i < length; i++) {
+                      const idx = alphabet.indexOf(clean[i]);
+                      if (idx === -1) throw new Error('Invalid base32 char');
+                      value = (value << 5) | idx;
+                      bits += 5;
+                      if (bits >= 8) {
+                        bytes.push((value >>> (bits - 8)) & 255);
+                        bits -= 8;
+                      }
+                    }
+                    return Buffer.from(bytes);
+                  }
+                  const key = base32Decode(process.env.SECRET_KEY);
+                  const time = Math.floor(Math.floor(Date.now() / 1000) / 30);
+                  const buffer = Buffer.alloc(8);
+                  buffer.writeUInt32BE(Math.floor(time / 0x100000000), 0);
+                  buffer.writeUInt32BE(time & 0xffffffff, 4);
+                  const hmac = crypto.createHmac('sha1', key).update(buffer).digest();
+                  const offset = hmac[hmac.length - 1] & 0xf;
+                  const code = ((hmac[offset] & 0x7f) << 24) |
+                               ((hmac[offset + 1] & 0xff) << 16) |
+                               ((hmac[offset + 2] & 0xff) << 8) |
+                               (hmac[offset + 3] & 0xff);
+                  const otp = (code % 1000000).toString().padStart(6, '0');
+                  console.log(otp);
+                } catch (e) {
+                  console.error('Error:', e.message);
+                  process.exit(1);
+                }
+              ")
+              if [ \$? -eq 0 ] && [ -n "\$OTP_CODE" ]; then
+                echo "Successfully generated TOTP code!"
+                echo "EPIC_MFA_CODE=\$OTP_CODE" >> \$GITHUB_ENV
+              else
+                echo "Failed to generate TOTP code"
+              fi
+            else
+              echo "EPIC_MFA_CODE is already a 6-digit code."
+            fi
+          fi
+        env:
+          SECRET_KEY: \${{ secrets.EPIC_MFA_CODE }}`;
+            }
 
             const commands = [];
             if (enableEpic) commands.push('node epic-games');
@@ -420,7 +539,7 @@ jobs:
           # Epic Games Credentials
           EPIC_EMAIL: \${{ secrets.EPIC_EMAIL }}
           EPIC_PASSWORD: \${{ secrets.EPIC_PASSWORD }}
-          EPIC_MFA_CODE: \${{ secrets.EPIC_MFA_CODE }}
+          EPIC_MFA_CODE: \${{ env.EPIC_MFA_CODE || secrets.EPIC_MFA_CODE }}
           EPIC_FREE_GAMES_ONLY: 'true'`;
             }
 

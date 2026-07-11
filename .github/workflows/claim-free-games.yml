@@ -39,6 +39,77 @@ jobs:
           key: ${{ runner.os }}-free-games-claimer-browser-${{ github.run_id }}
           restore-keys: |
             ${{ runner.os }}-free-games-claimer-browser-
+
+      - name: Checkout own repository (to load pre-authenticated session cookies)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          path: 'own-repo'
+
+      - name: Import pre-authenticated session cookies
+        run: |
+          if [ -d "own-repo/data/browser" ]; then
+            mkdir -p data
+            cp -r own-repo/data/browser data/
+            echo "Successfully loaded pre-authenticated cookies from own-repo/data/browser!"
+          fi
+          
+      - name: Generate Epic MFA code if TOTP secret is provided
+        run: |
+          if [ -n "${{ secrets.EPIC_MFA_CODE }}" ]; then
+            if [[ ! "${{ secrets.EPIC_MFA_CODE }}" =~ ^[0-9]{6}$ ]]; then
+              echo "EPIC_MFA_CODE is a TOTP Secret Key. Generating 6-digit code..."
+              OTP_CODE=$(node -e "
+                try {
+                  const crypto = require('crypto');
+                  function base32Decode(base32) {
+                    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+                    const clean = base32.toUpperCase().replace(/=+$/, '').replace(/[\s-]/g, '');
+                    const length = clean.length;
+                    let bits = 0, value = 0;
+                    const bytes = [];
+                    for (let i = 0; i < length; i++) {
+                      const idx = alphabet.indexOf(clean[i]);
+                      if (idx === -1) throw new Error('Invalid base32 char');
+                      value = (value << 5) | idx;
+                      bits += 5;
+                      if (bits >= 8) {
+                        bytes.push((value >>> (bits - 8)) & 255);
+                        bits -= 8;
+                      }
+                    }
+                    return Buffer.from(bytes);
+                  }
+                  const key = base32Decode(process.env.SECRET_KEY);
+                  const time = Math.floor(Math.floor(Date.now() / 1000) / 30);
+                  const buffer = Buffer.alloc(8);
+                  buffer.writeUInt32BE(Math.floor(time / 0x100000000), 0);
+                  buffer.writeUInt32BE(time & 0xffffffff, 4);
+                  const hmac = crypto.createHmac('sha1', key).update(buffer).digest();
+                  const offset = hmac[hmac.length - 1] & 0xf;
+                  const code = ((hmac[offset] & 0x7f) << 24) |
+                               ((hmac[offset + 1] & 0xff) << 16) |
+                               ((hmac[offset + 2] & 0xff) << 8) |
+                               (hmac[offset + 3] & 0xff);
+                  const otp = (code % 1000000).toString().padStart(6, '0');
+                  console.log(otp);
+                } catch (e) {
+                  console.error('Error:', e.message);
+                  process.exit(1);
+                }
+              ")
+              if [ $? -eq 0 ] && [ -n "$OTP_CODE" ]; then
+                echo "Successfully generated TOTP code!"
+                echo "EPIC_MFA_CODE=$OTP_CODE" >> $GITHUB_ENV
+              else
+                echo "Failed to generate TOTP code"
+              fi
+            else
+              echo "EPIC_MFA_CODE is already a 6-digit code."
+            fi
+          fi
+        env:
+          SECRET_KEY: ${{ secrets.EPIC_MFA_CODE }}
         
       - name: Run claimer script
         run: |
@@ -47,7 +118,7 @@ jobs:
           # Epic Games Credentials
           EPIC_EMAIL: ${{ secrets.EPIC_EMAIL }}
           EPIC_PASSWORD: ${{ secrets.EPIC_PASSWORD }}
-          EPIC_MFA_CODE: ${{ secrets.EPIC_MFA_CODE }}
+          EPIC_MFA_CODE: ${{ env.EPIC_MFA_CODE || secrets.EPIC_MFA_CODE }}
           EPIC_FREE_GAMES_ONLY: 'true'
           
           # Discord notifications
